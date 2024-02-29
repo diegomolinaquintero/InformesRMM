@@ -1,0 +1,23 @@
+{% extends "InformesMensuales/base.html" %}
+
+{% block content %}
+ <div >
+    <h1 >
+     Hola hola dasboard
+    </h1 >
+
+    <form method="post" action="{% url 'nombre_de_la_vista_dashboard' %}">
+        {% csrf_token %}
+        {% for form in forms %}
+          {{ form.as_p }}
+        {% endfor %}
+        <button type="submit">Guardar Respuestas</button>
+      </form>
+
+    
+    <form method="post" action="{% url 'exit' %}">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
+ </div >
+{% endblock %}
