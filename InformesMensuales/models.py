@@ -1,116 +1,104 @@
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.db import models
 
-
-class Sexo(models.Model):
-    nombre = models.CharField(max_length=50)
-
-    def __str__(self):
-        return self.nombre
-
-class TipoDocumentoIdentidad(models.Model):
-    nombre = models.CharField(max_length=50)
+class Profesor(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    documento_identidad = models.CharField(max_length=20)
+    roles = models.ManyToManyField('Rol', through='ProfesorRoles')
 
     def __str__(self):
-        return self.nombre
+        return f"{self.user.username} - {self.documento_identidad}"
 
-class Instrumento(models.Model):
-    nombre = models.CharField(max_length=50)
+class Escuela(models.Model):
+    nombre = models.CharField(max_length=255)
+    direccion = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.nombre
+        return f"{self.nombre} - {self.direccion}"
 
-class Rol(models.Model):
-    nombre = models.CharField(max_length=50, unique=True)
+class Ciclo(models.Model):
+    nombre = models.CharField(max_length=255)
     descripcion = models.TextField()
 
     def __str__(self):
-        return self.nombre
+        return f"{self.nombre} - {self.descripcion}"
 
-class Usuario(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    rol = models.ForeignKey(Rol, on_delete=models.CASCADE, related_name='usuarios')
-    sexo = models.ForeignKey(Sexo, on_delete=models.SET_NULL, null=True, blank=True)
-    tipo_documento_identidad = models.ForeignKey(TipoDocumentoIdentidad, on_delete=models.SET_NULL, null=True, blank=True)
-    numero_documento_identidad = models.CharField(max_length=20, unique=True, null=True, blank=True)
-    instrumento = models.ForeignKey(Instrumento, on_delete=models.SET_NULL, null=True, blank=True)
-    niveles = models.ManyToManyField('Nivel', through='UsuarioNivel', related_name='usuarios')
-
-    groups = models.ManyToManyField(Group, related_name='usuarios_groups')
+class Nivel(models.Model):
+    nombre = models.CharField(max_length=255)
+    descripcion = models.TextField()
 
     def __str__(self):
-        return f"{self.user} - {self.rol}"
+        return f"{self.nombre} - {self.descripcion}"
 
-class Escuela(models.Model):
-    nombre = models.CharField(max_length=100)
+class Rol(models.Model):
+    nombre = models.CharField(max_length=255)
+    descripcion = models.TextField()
 
     def __str__(self):
-        return self.nombre
+        return f"{self.nombre} - {self.descripcion}"
 
-class Ciclo(models.Model):
-    nombre = models.CharField(max_length=50)
-    escuela = models.ForeignKey(Escuela, on_delete=models.CASCADE, related_name='ciclos')
+class ProfesorEscuela(models.Model):
+    profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE)
+    escuela = models.ForeignKey(Escuela, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.profesor.user.username} - {self.escuela.nombre}"
+
+class EscuelaCiclos(models.Model):
+    escuela = models.ForeignKey(Escuela, on_delete=models.CASCADE)
+    ciclo = models.ForeignKey(Ciclo, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.escuela.nombre} - {self.ciclo.nombre}"
+
+class CicloNiveles(models.Model):
+    ciclo = models.ForeignKey(Ciclo, on_delete=models.CASCADE)
+    nivel = models.ForeignKey(Nivel, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.ciclo.nombre} - {self.nivel.nombre}"
+
+class Asignacion(models.Model):
+    profesor_escuela = models.ForeignKey(ProfesorEscuela, on_delete=models.CASCADE)
+    escuela_ciclos = models.ForeignKey(EscuelaCiclos, on_delete=models.CASCADE)
+    ciclo_niveles = models.ForeignKey(CicloNiveles, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.profesor_escuela.profesor.user.username} - {self.escuela_ciclos.escuela.nombre} - {self.ciclo_niveles.ciclo.nombre}"
+
+class ProfesorRoles(models.Model):
+    profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE)
+    rol = models.ForeignKey(Rol, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.profesor.user.username} - {self.rol.nombre}"
+    
+from django.db import models
+
+class Preguntas(models.Model):
+    pregunta = models.CharField(max_length=500)
+    rol = models.ForeignKey(Rol, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.pregunta} - {self.rol.nombre}"
+    
+class Mes(models.Model):
+    nombre = models.CharField(max_length=500)
     
 
     def __str__(self):
-        return f"{self.nombre} - {self.escuela}"
-
-class Nivel(models.Model):
-    nombre = models.CharField(max_length=50)
-    ciclo = models.ForeignKey(Ciclo, on_delete=models.CASCADE)
-
-    def __str__(self):
         return self.nombre
-
-class UsuarioNivel(models.Model):
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='niveles_asignados')
-    nivel = models.ForeignKey(Nivel, on_delete=models.CASCADE)
-
-
-    def save(self, *args, **kwargs):
-        self.ciclo = self.nivel.ciclo
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.usuario.user.username} - {self.nivel} - {self.ciclo}"
-
-class Mes(models.Model):
-    nombre = models.CharField(max_length=50, unique=True)
-
-    def __str__(self):
-        return self.nombre
-
-class Pregunta(models.Model):
-    texto = models.TextField()
-    roles = models.ManyToManyField(Rol, related_name='preguntas')
-    mes = models.ForeignKey(Mes, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"{self.texto} - {self.mes}"
-
-class Respuesta(models.Model):
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    pregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE)
-    ciclo = models.ForeignKey(Ciclo, on_delete=models.CASCADE)
-    nivel = models.ForeignKey(Nivel, on_delete=models.CASCADE)
-    respuesta = models.TextField()
-    fecha_respuesta = models.DateTimeField(auto_now_add=True)
-    mes = models.ForeignKey(Mes, on_delete=models.CASCADE)
-
-class InformeConsolidado(models.Model):
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    
+class RespuestaProfesor(models.Model):
+    profesor = models.ForeignKey(Profesor, on_delete=models.CASCADE)
     nivel = models.ForeignKey(Nivel, on_delete=models.CASCADE)
     ciclo = models.ForeignKey(Ciclo, on_delete=models.CASCADE)
     escuela = models.ForeignKey(Escuela, on_delete=models.CASCADE)
-    numero_informe = models.CharField(max_length=20, unique=True)
-    consolidado = models.TextField()
+    rol = models.ForeignKey(Rol, on_delete=models.CASCADE)
+    pregunta = models.ForeignKey(Preguntas, on_delete=models.CASCADE)
+    mes = models.ForeignKey(Mes, on_delete=models.CASCADE)
 
-    def save(self, *args, **kwargs):
-        self.numero_informe = f"{self.usuario.user.username}_{self.nivel.nombre}_{self.ciclo.nombre}_{self.escuela.nombre}"
-        super().save(*args, **kwargs)
+    respuesta = models.TextField()
 
     def __str__(self):
-        return self.numero_informe
-    
-    class Meta:
-        unique_together = ['usuario', 'nivel', 'ciclo', 'escuela']
+        return f"{self.profesor.user.username} - {self.escuela.nombre} - {self.ciclo.nombre} - {self.nivel.nombre} - {self.rol.nombre} - {self.pregunta.pregunta} - {self.mes.nombre}"
