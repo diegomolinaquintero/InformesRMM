@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import  dashboard, exit
+from .views import InformacionProfesor
 
 urlpatterns = [
-    path('dashboard/', dashboard, name='dashboard'),
-    path('exit/', exit, name='exit')
+    path('informacion-profesor/<str:cedula>/', InformacionProfesor.as_view(), name='informacion-profesor'),
+    # Agrega otras URL según tus necesidades
 ]
+

@@ -1,8 +1,9 @@
 from django.contrib import admin
+from rest_framework.authtoken.views import obtain_auth_token
 from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('Reportes/', include('InformesMensuales.urls')),
-    path('accounts/', include('django.contrib.auth.urls')),  
+    path('api-token-auth/', obtain_auth_token, name='api_token_auth'), 
 ]
