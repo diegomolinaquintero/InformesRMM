@@ -1,13 +1,10 @@
 from django.contrib import admin
 from .models import Profesor, Escuela, Ciclo, Nivel, Rol, ProfesorEscuela, EscuelaCiclos, CicloNiveles, Asignacion, ProfesorRoles, Preguntas, Mes, RespuestaProfesor
 
-# Register your models here.
-
 @admin.register(Profesor)
 class ProfesorAdmin(admin.ModelAdmin):
     list_display = ('user', 'documento_identidad')
     search_fields = ('user__username', 'documento_identidad')
-    list_filter = ('roles',)
 
 @admin.register(Escuela)
 class EscuelaAdmin(admin.ModelAdmin):
@@ -62,6 +59,7 @@ class PreguntasAdmin(admin.ModelAdmin):
 @admin.register(Mes)
 class MesAdmin(admin.ModelAdmin):
     list_display = ('nombre',)
+    search_fields = ('nombre',)
 
 @admin.register(RespuestaProfesor)
 class RespuestaProfesorAdmin(admin.ModelAdmin):
